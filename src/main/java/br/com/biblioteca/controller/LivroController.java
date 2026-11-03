@@ -2,6 +2,8 @@ package br.com.biblioteca.controller;
 
 import br.com.biblioteca.model.Livro;
 import br.com.biblioteca.repository.LivroRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -20,6 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/livros")
+@Tag(name = "Livros", description = "Cadastro, consulta, atualizacao e remocao de livros")
 public class LivroController {
 
     private final LivroRepository repository;
@@ -28,16 +31,19 @@ public class LivroController {
         this.repository = repository;
     }
 
+    @Operation(summary = "Lista todos os livros")
     @GetMapping
     public List<Livro> listar() {
         return repository.findAll();
     }
 
+    @Operation(summary = "Busca um livro pelo id")
     @GetMapping("/{id}")
     public Livro buscarPorId(@PathVariable Long id) {
         return repository.findById(id).orElseThrow(() -> livroNaoEncontrado(id));
     }
 
+    @Operation(summary = "Cadastra um novo livro", description = "Retorna 409 se o ISBN ja estiver cadastrado.")
     @PostMapping
     public ResponseEntity<Livro> criar(@Valid @RequestBody Livro livro) {
         if (repository.existsByIsbn(livro.getIsbn())) {
@@ -53,6 +59,7 @@ public class LivroController {
         return ResponseEntity.created(location).body(salvo);
     }
 
+    @Operation(summary = "Atualiza um livro existente", description = "Retorna 404 se o livro nao existir e 409 se o ISBN pertencer a outro livro.")
     @PutMapping("/{id}")
     public Livro atualizar(@PathVariable Long id, @Valid @RequestBody Livro dados) {
         Livro livro = repository.findById(id).orElseThrow(() -> livroNaoEncontrado(id));
@@ -68,6 +75,7 @@ public class LivroController {
         return repository.save(livro);
     }
 
+    @Operation(summary = "Remove um livro")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         if (!repository.existsById(id)) {
